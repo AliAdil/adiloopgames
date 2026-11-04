@@ -31,6 +31,7 @@ import {
 import Reveal from '@/components/Reveal';
 import CountUp from '@/components/CountUp';
 import ArticleReader from '@/components/ArticleReader';
+import CyberDashGame from '@/components/CyberDashGame';
 import {
     LeaderboardAd,
     FooterBannerAd,
@@ -805,9 +806,20 @@ export default function HomePage() {
                         <a href="#top" className="transition-colors hover:text-foreground">News</a>
                         <a href="#trending" className="transition-colors hover:text-foreground">Trending</a>
                         <a href="#latest" className="transition-colors hover:text-foreground">Latest</a>
+                        <a href="#arcade" className="flex items-center gap-1.5 font-bold text-primary transition-colors hover:text-primary/80">
+                            <Gamepad2 className="h-4 w-4" />
+                            Arcade
+                        </a>
                         <a href="#studio" className="transition-colors hover:text-foreground">Studio Games</a>
                     </nav>
                     <div className="flex items-center gap-3">
+                        <a
+                            href="#arcade"
+                            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/10 px-3.5 py-1.5 text-xs font-extrabold text-primary hover:bg-primary/20 transition-all hover:scale-105"
+                        >
+                            <Flame className="h-3.5 w-3.5" />
+                            Play Mini Game
+                        </a>
                         <button
                             type="button"
                             aria-label="Search"
@@ -1027,6 +1039,27 @@ export default function HomePage() {
                             </button>
                         )}
                     </div>
+                </div>
+            </section>
+
+            {/* AdilLoop Arcade Lounge: Hyper-Casual Mini-Game */}
+            <section id="arcade" className="relative border-y border-border/60 bg-gradient-to-b from-card/30 via-background to-card/20 py-20 px-5 md:px-8">
+                <div className="mx-auto max-w-7xl">
+                    <Reveal y={20}>
+                        <div className="mb-10 text-center">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary shadow-lg shadow-primary/10">
+                                <Flame className="h-4 w-4" /> PLAYABLE RETRO ARCADE · ZERO DOWNLOADS
+                            </div>
+                            <h2 className="mt-4 font-display text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-white">
+                                AdilLoop Arcade <span className="text-primary">Lounge</span>.
+                            </h2>
+                            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                                Take a break from the headlines — dodge laser sentinels, collect Adil gems, and activate hyper overdrive in our addictive neon runner!
+                            </p>
+                        </div>
+                    </Reveal>
+
+                    <CyberDashGame />
                 </div>
             </section>
 
