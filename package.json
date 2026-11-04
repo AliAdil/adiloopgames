@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix apps/web",
-    "build": "npm run build --prefix apps/web && mkdir -p dist && cp -r dist/apps/web/* dist/ 2>/dev/null || true",
+    "build": "npm run build --prefix apps/web && mkdir -p dist/admin && cp dist/apps/web/index.html dist/admin/index.html && cp -r dist/apps/web/* dist/ && cp apps/web/public/.htaccess dist/.htaccess 2>/dev/null || true",
     "start": "npm run start --prefix apps/web",
     "lint": "npm run lint --prefix apps/web"
   },

@@ -28,6 +28,7 @@ import {
     AlertCircle,
     PartyPopper,
     RotateCcw,
+    Lock,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import CountUp from '@/components/CountUp';
@@ -1256,6 +1257,13 @@ export default function HomePage() {
                         >
                             Terms of Service
                         </button>
+                        <a
+                            href="/admin"
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 transition-colors hover:text-primary"
+                        >
+                            <Lock className="h-3 w-3" />
+                            Staff Portal
+                        </a>
                     </nav>
                     <p className="text-xs text-muted-foreground">
                         © {new Date().getFullYear()} AdilLoopGames. Verified gaming news.
