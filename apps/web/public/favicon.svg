@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3e635"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#121815"/>
+      <stop offset="100%" stop-color="#080c0a"/>
+    </linearGradient>
+    <filter id="neonBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Dark squircle base -->
+  <rect x="24" y="24" width="464" height="464" rx="116" fill="url(#cardBg)" stroke="url(#neonGlow)" stroke-width="16" />
+
+  <!-- Controller Body Silhouette with Neon Border -->
+  <g transform="translate(0, 16)" filter="url(#neonBlur)">
+    <!-- Main Gamepad Contour -->
+    <path d="M168 180 C130 180 96 206 84 252 L60 348 C50 388 78 424 118 424 C140 424 162 408 174 388 L204 336 C220 310 242 300 256 300 C270 300 292 310 308 336 L338 388 C350 408 372 424 394 424 C434 424 462 388 452 348 L428 252 C416 206 382 180 344 180 Z" 
+          fill="#16201b" 
+          stroke="url(#neonGlow)" 
+          stroke-width="18" 
+          stroke-linejoin="round" />
+
+    <!-- D-Pad (Left) -->
+    <g fill="#a3e635">
+      <rect x="136" y="236" width="22" height="64" rx="6" />
+      <rect x="115" y="257" width="64" height="22" rx="6" />
+    </g>
+
+    <!-- Action Buttons (Right) -->
+    <g>
+      <circle cx="376" cy="242" r="12" fill="#22d3ee" />
+      <circle cx="350" cy="268" r="12" fill="#a3e635" />
+      <circle cx="402" cy="268" r="12" fill="#d946ef" />
+      <circle cx="376" cy="294" r="12" fill="#fbbf24" />
+    </g>
+
+    <!-- Center Loop / Power Emblem -->
+    <g transform="translate(256, 240)">
+      <!-- Loop Infinity Accent -->
+      <path d="M-28 -6 C-40 -18 -52 6 -30 18 C-12 28 -4 4 0 0 C4 -4 12 -28 30 -18 C52 -6 40 18 28 6" 
+            fill="none" 
+            stroke="#a3e635" 
+            stroke-width="8" 
+            stroke-linecap="round" />
+      <circle cx="0" cy="0" r="8" fill="#22d3ee" />
+    </g>
+  </g>
+</svg>

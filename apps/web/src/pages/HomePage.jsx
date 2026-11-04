@@ -10,6 +10,7 @@ import {
     ArrowRight,
     ArrowUpRight,
     Search,
+    X,
     Bell,
     Trophy,
     Rocket,
@@ -32,6 +33,8 @@ import Reveal from '@/components/Reveal';
 import CountUp from '@/components/CountUp';
 import ArticleReader from '@/components/ArticleReader';
 import CyberDashGame from '@/components/CyberDashGame';
+import SearchDialog from '@/components/SearchDialog';
+import ScheduledQueueTracker from '@/components/ScheduledQueueTracker';
 import {
     LeaderboardAd,
     FooterBannerAd,
@@ -39,6 +42,7 @@ import {
 } from '@/components/AdSlot';
 import { PrivacyPolicyModal, TermsOfServiceModal } from '@/components/LegalModals';
 import { EXTRA_ARTICLES } from '@/data/articles';
+import { SCHEDULED_ARTICLES } from '@/data/scheduledArticles';
 import { formatPubDate, formatRelative } from '@/lib/datetime';
 
 /* ------------------------------------------------------------------ */
@@ -753,23 +757,76 @@ export default function HomePage() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [privacyOpen, setPrivacyOpen] = useState(false);
     const [termsOpen, setTermsOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [gridSearchQuery, setGridSearchQuery] = useState('');
+    const [currentTime, setCurrentTime] = useState(Date.now());
 
+    // Auto-refresh timer every second so scheduled stories unlock automatically on the hour
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Global keyboard shortcut: Cmd+K / Ctrl+K opens search
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setSearchOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // Live scheduled articles whose release time has arrived
+    const liveScheduledArticles = useMemo(() => {
+        return SCHEDULED_ARTICLES.filter((art) => {
+            return new Date(art.publishedAt || art.scheduledFor).getTime() <= currentTime;
+        });
+    }, [currentTime]);
+
+    // Unified active articles (Base 19 + Extra 28 + Unlocked Scheduled)
+    const allActiveArticles = useMemo(() => {
+        const combined = [...ALL_ARTICLES, ...EXTRA_ARTICLES, ...liveScheduledArticles];
+        const seen = new Set();
+        const unique = [];
+        for (const a of combined) {
+            const key = a.slug || a.title;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(a);
+            }
+        }
+        return unique.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    }, [liveScheduledArticles]);
+
+    // Filtered articles for the Latest Grid
     const filteredArticles = useMemo(() => {
-        const base = activePlatform === 'all'
-            ? GRID_ARTICLES
-            : GRID_ARTICLES.filter((a) => a.platform === activePlatform);
-        // Strict newest-first sort by publishedAt.
-        return [...base].sort((a, b) => b.publishedAt - a.publishedAt);
-    }, [activePlatform]);
+        let list = allActiveArticles.slice(1); // Exclude hero featured story
+        if (activePlatform !== 'all') {
+            list = list.filter((a) => a.platform === activePlatform);
+        }
+        if (gridSearchQuery.trim()) {
+            const q = gridSearchQuery.toLowerCase().trim();
+            list = list.filter((a) =>
+                a.title?.toLowerCase().includes(q) ||
+                a.excerpt?.toLowerCase().includes(q) ||
+                a.category?.toLowerCase().includes(q) ||
+                a.author?.toLowerCase().includes(q)
+            );
+        }
+        return list;
+    }, [allActiveArticles, activePlatform, gridSearchQuery]);
 
     const visibleArticles = filteredArticles.slice(0, visibleCount);
     const allLoaded = visibleCount >= filteredArticles.length;
 
-    // Reset pagination whenever the platform filter changes.
+    // Reset pagination whenever platform filter or search query changes
     useEffect(() => {
         setVisibleCount(6);
         setLoadingMore(false);
-    }, [activePlatform]);
+    }, [activePlatform, gridSearchQuery]);
 
     const handleLoadMore = () => {
         setLoadingMore(true);
@@ -822,8 +879,10 @@ export default function HomePage() {
                         </a>
                         <button
                             type="button"
-                            aria-label="Search"
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                            onClick={() => setSearchOpen(true)}
+                            aria-label="Search articles"
+                            title="Search (⌘K)"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:border-primary/50 hover:text-primary active:scale-95"
                         >
                             <Search className="h-4 w-4" strokeWidth={2.5} />
                         </button>
@@ -847,6 +906,12 @@ export default function HomePage() {
 
             {/* Top leaderboard ad */}
             <LeaderboardAd />
+
+            {/* 1-Hour Scheduled Publishing Wire */}
+            <ScheduledQueueTracker
+                scheduledArticles={SCHEDULED_ARTICLES}
+                onSelectArticle={openArticle}
+            />
 
             {/* Hero featured story */}
             <section id="top" className="relative mx-auto max-w-7xl px-5 pt-10 md:px-8 md:pt-14">
@@ -967,28 +1032,52 @@ export default function HomePage() {
                         </div>
                     </Reveal>
 
-                    {/* Platform filter tabs */}
+                    {/* Platform filter tabs & search filter */}
                     <Reveal delay={0.1} y={20}>
-                        <div className="mt-10 flex flex-wrap gap-2">
-                            {PLATFORMS.map((p) => {
-                                const Icon = p.icon;
-                                const active = activePlatform === p.id;
-                                return (
+                        <div className="mt-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex flex-wrap gap-2">
+                                {PLATFORMS.map((p) => {
+                                    const Icon = p.icon;
+                                    const active = activePlatform === p.id;
+                                    return (
+                                        <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => setActivePlatform(p.id)}
+                                            className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 py-2.5 font-display text-sm font-bold uppercase tracking-[0.12em] transition-all duration-200 ${
+                                                active
+                                                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                                    : 'border-border bg-card/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                                            }`}
+                                        >
+                                            <Icon className="h-4 w-4" strokeWidth={2.5} />
+                                            {p.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Inline grid search input */}
+                            <div className="relative w-full md:w-72">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={2} />
+                                <input
+                                    type="text"
+                                    value={gridSearchQuery}
+                                    onChange={(e) => setGridSearchQuery(e.target.value)}
+                                    placeholder="Quick filter stories..."
+                                    className="w-full rounded-full border border-border/80 bg-card/60 pl-9 pr-9 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
+                                />
+                                {gridSearchQuery && (
                                     <button
-                                        key={p.id}
                                         type="button"
-                                        onClick={() => setActivePlatform(p.id)}
-                                        className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 py-2.5 font-display text-sm font-bold uppercase tracking-[0.12em] transition-all duration-200 ${
-                                            active
-                                                ? 'border-primary bg-primary text-primary-foreground'
-                                                : 'border-border bg-card/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                                        }`}
+                                        onClick={() => setGridSearchQuery('')}
+                                        aria-label="Clear filter"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
                                     >
-                                        <Icon className="h-4 w-4" strokeWidth={2.5} />
-                                        {p.label}
+                                        <X className="h-3.5 w-3.5" />
                                     </button>
-                                );
-                            })}
+                                )}
+                            </div>
                         </div>
                     </Reveal>
 
@@ -1186,6 +1275,14 @@ export default function HomePage() {
             {/* Legal / compliance modals */}
             <PrivacyPolicyModal open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
             <TermsOfServiceModal open={termsOpen} onClose={() => setTermsOpen(false)} />
+
+            {/* Interactive Search Modal */}
+            <SearchDialog
+                isOpen={searchOpen}
+                onClose={() => setSearchOpen(false)}
+                articles={allActiveArticles}
+                onSelectArticle={openArticle}
+            />
         </div>
     );
 }
