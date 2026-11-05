@@ -318,7 +318,7 @@ export const EXTRA_ARTICLES = [
                 'A free upgrade path, carried inventory, and a genuinely modern engine. Valve is not leaving the crown up for grabs.',
             ]},
         ],
-    },,
+    },
     {
         title: `Nintendo Explains Why Fast Travel Was Cut From The Legend of Zelda: Ocarina of Time Remake`,
         platform: 'nintendo',

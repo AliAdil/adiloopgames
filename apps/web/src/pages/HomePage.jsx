@@ -782,39 +782,46 @@ export default function HomePage() {
 
     // Live scheduled articles whose release time has arrived
     const liveScheduledArticles = useMemo(() => {
-        return SCHEDULED_ARTICLES.filter((art) => {
-            return new Date(art.publishedAt || art.scheduledFor).getTime() <= currentTime;
+        return (SCHEDULED_ARTICLES || []).filter((art) => {
+            if (!art) return false;
+            const targetTime = new Date(art.publishedAt || art.scheduledFor).getTime();
+            return !isNaN(targetTime) && targetTime <= currentTime;
         });
     }, [currentTime]);
 
     // Unified active articles (Base 19 + Extra 28 + Unlocked Scheduled)
     const allActiveArticles = useMemo(() => {
-        const combined = [...ALL_ARTICLES, ...EXTRA_ARTICLES, ...liveScheduledArticles];
+        const combined = [...(ALL_ARTICLES || []), ...(EXTRA_ARTICLES || []), ...liveScheduledArticles].filter(Boolean);
         const seen = new Set();
         const unique = [];
         for (const a of combined) {
+            if (!a || (!a.title && !a.slug)) continue;
             const key = a.slug || a.title;
             if (!seen.has(key)) {
                 seen.add(key);
                 unique.push(a);
             }
         }
-        return unique.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+        return unique.sort((a, b) => {
+            const timeA = new Date(a.publishedAt || 0).getTime();
+            const timeB = new Date(b.publishedAt || 0).getTime();
+            return timeB - timeA;
+        });
     }, [liveScheduledArticles]);
 
     // Filtered articles for the Latest Grid
     const filteredArticles = useMemo(() => {
         let list = allActiveArticles.slice(1); // Exclude hero featured story
         if (activePlatform !== 'all') {
-            list = list.filter((a) => a.platform === activePlatform);
+            list = list.filter((a) => a && a.platform === activePlatform);
         }
         if (gridSearchQuery.trim()) {
             const q = gridSearchQuery.toLowerCase().trim();
             list = list.filter((a) =>
-                a.title?.toLowerCase().includes(q) ||
-                a.excerpt?.toLowerCase().includes(q) ||
-                a.category?.toLowerCase().includes(q) ||
-                a.author?.toLowerCase().includes(q)
+                (a?.title && a.title.toLowerCase().includes(q)) ||
+                (a?.excerpt && a.excerpt.toLowerCase().includes(q)) ||
+                (a?.category && a.category.toLowerCase().includes(q)) ||
+                (a?.author && a.author.toLowerCase().includes(q))
             );
         }
         return list;
